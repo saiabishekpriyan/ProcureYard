@@ -1,0 +1,1052 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QuickDrop Operations Dashboard</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --surface: #1e293b;
+      --surface-border: #334155;
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --primary: #3b82f6;
+      --primary-hover: #2563eb;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font);
+      background-color: var(--bg);
+      color: var(--text-main);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    header {
+      background-color: var(--surface);
+      border-bottom: 1px solid var(--surface-border);
+      padding: 14px 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .brand-logo {
+      width: 32px;
+      height: 32px;
+      background: linear-gradient(135deg, var(--primary), #8b5cf6);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 18px;
+    }
+
+    .brand-title {
+      font-size: 18px;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-subtitle {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .btn {
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      padding: 8px 14px;
+      border-radius: 6px;
+      border: 1px solid transparent;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      text-decoration: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+    }
+
+    .btn-primary {
+      background-color: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background-color: var(--primary-hover);
+    }
+
+    .btn-secondary {
+      background-color: transparent;
+      border-color: var(--surface-border);
+      color: var(--text-main);
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background-color: rgba(255, 255, 255, 0.05);
+    }
+
+    .btn-success {
+      background-color: #059669;
+      color: white;
+    }
+    .btn-success:hover:not(:disabled) {
+      background-color: #047857;
+    }
+
+    .btn-danger {
+      background-color: transparent;
+      border-color: var(--danger);
+      color: var(--danger);
+    }
+    .btn-danger:hover:not(:disabled) {
+      background-color: var(--danger);
+      color: white;
+    }
+
+    main {
+      flex: 1;
+      padding: 20px 24px;
+      display: grid;
+      grid-template-columns: 1.05fr 1.15fr;
+      gap: 20px;
+      max-width: 1750px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    @media (max-width: 1100px) {
+      main {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      background-color: var(--surface);
+      border: 1px solid var(--surface-border);
+      border-radius: 10px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 105px);
+    }
+
+    .card-header {
+      padding: 14px 18px;
+      border-bottom: 1px solid var(--surface-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+
+    .card-title {
+      font-size: 15px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .badge-count {
+      background-color: rgba(59, 130, 246, 0.2);
+      color: var(--primary);
+    }
+
+    .badge-approval {
+      background-color: rgba(245, 158, 11, 0.15);
+      color: var(--warning);
+    }
+
+    .badge-escalation {
+      background-color: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+    }
+
+    .card-body {
+      padding: 18px;
+      flex: 1;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Queue Table */
+    .table-responsive {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 13px;
+    }
+
+    th {
+      padding: 12px 14px;
+      color: var(--text-muted);
+      font-weight: 600;
+      border-bottom: 1px solid var(--surface-border);
+      white-space: nowrap;
+    }
+
+    td {
+      padding: 14px;
+      border-bottom: 1px solid var(--surface-border);
+      vertical-align: middle;
+    }
+
+    tr:last-child td {
+      border-bottom: none;
+    }
+
+    tr.clickable {
+      cursor: pointer;
+      transition: background-color 0.1s ease;
+    }
+
+    tr.clickable:hover {
+      background-color: rgba(255, 255, 255, 0.03);
+    }
+
+    tr.selected {
+      background-color: rgba(59, 130, 246, 0.12);
+      border-left: 3px solid var(--primary);
+    }
+
+    .rider-pill {
+      font-family: monospace;
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.06);
+      padding: 3px 6px;
+      border-radius: 4px;
+      color: #38bdf8;
+    }
+
+    .amount-tag {
+      font-weight: 600;
+      color: #34d399;
+    }
+
+    .reason-cell {
+      max-width: 250px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    /* Live Chat & Trace Interface */
+    .chat-header-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 14px;
+      flex-shrink: 0;
+    }
+
+    .input-field {
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid var(--surface-border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      color: var(--text-main);
+      font-size: 13px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    .input-field:focus {
+      border-color: var(--primary);
+    }
+
+    .select-rider {
+      font-family: monospace;
+      font-weight: 600;
+      color: #38bdf8;
+    }
+
+    .chat-container {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      flex: 1;
+      overflow-y: auto;
+      padding: 6px 4px 14px 4px;
+    }
+
+    .chat-bubble-wrapper {
+      display: flex;
+      flex-direction: column;
+      width: 100%;
+    }
+
+    .chat-bubble-wrapper.rider {
+      align-items: flex-start;
+    }
+
+    .chat-bubble-wrapper.agent {
+      align-items: flex-end;
+    }
+
+    .chat-label-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .chat-label-badge {
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+
+    .chat-label-badge.rider {
+      color: #38bdf8;
+    }
+
+    .chat-label-badge.agent {
+      color: #a78bfa;
+    }
+
+    .chat-bubble {
+      max-width: 84%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      font-size: 13px;
+      line-height: 1.5;
+      word-break: break-word;
+      white-space: pre-wrap;
+      position: relative;
+    }
+
+    .chat-bubble.rider {
+      background-color: #1e293b;
+      border: 1px solid #334155;
+      color: #f1f5f9;
+      border-top-left-radius: 2px;
+    }
+
+    .chat-bubble.agent {
+      background: linear-gradient(135deg, #1e3a8a, #1e293b);
+      border: 1px solid #3b82f6;
+      color: #ffffff;
+      border-top-right-radius: 2px;
+    }
+
+    .chat-bubble.unavailable {
+      background-color: rgba(239, 68, 68, 0.1);
+      border: 1px dashed rgba(239, 68, 68, 0.4);
+      color: #fca5a5;
+      font-style: italic;
+    }
+
+    .chat-bubble.loading-bubble {
+      background: rgba(30, 58, 138, 0.4);
+      border: 1px solid rgba(59, 130, 246, 0.4);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Live Chat Input Box */
+    .chat-input-area {
+      border-top: 1px solid var(--surface-border);
+      padding-top: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .chat-textarea {
+      width: 100%;
+      min-height: 64px;
+      max-height: 120px;
+      resize: vertical;
+      font-family: inherit;
+      font-size: 13px;
+      line-height: 1.4;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: var(--text-main);
+      outline: none;
+    }
+
+    .chat-textarea:focus {
+      border-color: var(--primary);
+    }
+
+    .chat-actions-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chat-hint {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Collapsible Technical Details */
+    details.tech-details {
+      margin-top: 12px;
+      background: rgba(15, 23, 42, 0.7);
+      border: 1px solid var(--surface-border);
+      border-radius: 8px;
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    details.tech-details summary {
+      padding: 10px 14px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      outline: none;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    details.tech-details summary:hover {
+      color: var(--text-main);
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .tech-log-content {
+      padding: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+      font-family: monospace;
+      font-size: 11px;
+      color: #94a3b8;
+      border-top: 1px solid var(--surface-border);
+    }
+
+    .tech-item {
+      margin-bottom: 8px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .tech-item:last-child {
+      margin-bottom: 0;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    /* States */
+    .empty-state {
+      text-align: center;
+      padding: 40px 20px;
+      color: var(--text-muted);
+      margin: auto;
+    }
+
+    .empty-state-icon {
+      font-size: 32px;
+      margin-bottom: 10px;
+      opacity: 0.6;
+    }
+
+    .loading-spinner {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+      border: 2px solid rgba(255, 255, 255, 0.2);
+      border-radius: 50%;
+      border-top-color: var(--primary);
+      animation: spin 0.8s linear infinite;
+    }
+
+    .loading-spinner-sm {
+      width: 14px;
+      height: 14px;
+      border-width: 2px;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    .notification {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      background: var(--surface);
+      border: 1px solid var(--surface-border);
+      padding: 12px 18px;
+      border-radius: 8px;
+      box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+      font-size: 13px;
+      display: none;
+      z-index: 100;
+    }
+
+    .notification.show {
+      display: block;
+      animation: slideIn 0.2s ease;
+    }
+
+    @keyframes slideIn {
+      from { transform: translateY(10px); opacity: 0; }
+      to { transform: translateY(0); opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="brand-logo">Q</div>
+      <div>
+        <div class="brand-title">ProcureYard Dispute Desk</div>
+        <div class="brand-subtitle">Operations Queue & Live Conversational Rider Assistant</div>
+      </div>
+    </div>
+    <div class="header-actions">
+      <button id="btnRefreshQueue" class="btn btn-secondary" onclick="loadPending()">
+        <span>Refresh Queue</span>
+      </button>
+      <a href="/docs" target="_blank" class="btn btn-secondary">API Docs</a>
+    </div>
+  </header>
+
+  <main>
+    <!-- Left Column: Pending Queue -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>Pending Approvals & Escalations</span>
+          <span id="queueCountBadge" class="badge badge-count">0</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div id="queueLoading" class="empty-state">
+          <div class="loading-spinner"></div>
+          <div style="margin-top: 10px;">Loading pending queue...</div>
+        </div>
+
+        <div id="queueEmpty" class="empty-state" style="display: none;">
+          <div class="empty-state-icon">✓</div>
+          <div>No pending items. All rider disputes are up to date!</div>
+        </div>
+
+        <div id="queueError" class="empty-state" style="display: none; color: var(--danger);">
+          <div class="empty-state-icon">⚠</div>
+          <div id="queueErrorMsg">Failed to load pending queue.</div>
+        </div>
+
+        <div id="queueContainer" class="table-responsive" style="display: none;">
+          <table>
+            <thead>
+              <tr>
+                <th>Rider</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Reason</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="queueTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Right Column: Live Rider Chat & Dispute Trace Explorer -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">
+          <span>Live Rider Chat & Trace Explorer</span>
+          <span id="traceRiderBadge" class="badge badge-count">R003</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <!-- Rider Selector Bar -->
+        <div class="chat-header-bar">
+          <label for="riderSelect" style="font-size: 12px; color: var(--text-muted); font-weight: 600;">Rider:</label>
+          <input
+            id="traceRiderInput"
+            type="text"
+            class="input-field select-rider"
+            style="width: 100px; text-transform: uppercase;"
+            value="R003"
+            placeholder="R003"
+          />
+          <button type="button" class="btn btn-secondary" onclick="handleRiderChange()">Switch Rider</button>
+          <div style="flex: 1;"></div>
+          <button type="button" class="btn btn-secondary" style="font-size: 11px; padding: 6px 10px;" onclick="reloadActiveConversation()">Reload History</button>
+        </div>
+
+        <div id="traceLoading" class="empty-state" style="display: none;">
+          <div class="loading-spinner"></div>
+          <div style="margin-top: 10px;">Loading rider conversation...</div>
+        </div>
+
+        <div id="traceEmpty" class="empty-state" style="display: none;">
+          <div class="empty-state-icon">💬</div>
+          <div>No message history for this rider. Send a message below to start a live conversation.</div>
+        </div>
+
+        <div id="traceError" class="empty-state" style="display: none; color: var(--danger);">
+          <div class="empty-state-icon">⚠</div>
+          <div id="traceErrorMsg">Failed to retrieve conversation.</div>
+        </div>
+
+        <div id="traceContainer" style="display: flex; flex: 1; flex-direction: column; overflow: hidden;">
+          <!-- Chat Feed -->
+          <div id="chatFeed" class="chat-container"></div>
+
+          <!-- Live Chat Input Form -->
+          <div class="chat-input-area">
+            <textarea
+              id="chatMessageInput"
+              class="chat-textarea"
+              placeholder="Type rider message in English, Hindi, or Hinglish (e.g., 'My payout is short for 20th Sep')..."
+              rows="2"
+            ></textarea>
+            <div class="chat-actions-row">
+              <span class="chat-hint">Press <strong>Enter</strong> to send, <strong>Shift+Enter</strong> for new line</span>
+              <button id="btnSendMessage" class="btn btn-primary" onclick="sendMessage()">
+                <span>Send Message</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Collapsible Technical Details -->
+          <details class="tech-details" id="techDetailsSection">
+            <summary>
+              <span>⚙ Technical Audit Trail & Tool Logs</span>
+              <span id="techEventCount" class="badge badge-count" style="font-size: 10px;">0</span>
+            </summary>
+            <div id="techLogContent" class="tech-log-content"></div>
+          </details>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="notification"></div>
+
+  <script>
+    let activeRider = "R003";
+    let queueItems = [];
+    let isSending = false;
+    let pendingRetryPayload = null;
+
+    function showToast(msg, isError = false) {
+      const toast = document.getElementById("toast");
+      toast.innerText = msg;
+      toast.style.borderColor = isError ? "var(--danger)" : "var(--primary)";
+      toast.classList.add("show");
+      setTimeout(() => toast.classList.remove("show"), 3500);
+    }
+
+    async function loadPending() {
+      const loading = document.getElementById("queueLoading");
+      const empty = document.getElementById("queueEmpty");
+      const err = document.getElementById("queueError");
+      const container = document.getElementById("queueContainer");
+      const countBadge = document.getElementById("queueCountBadge");
+
+      loading.style.display = "block";
+      empty.style.display = "none";
+      err.style.display = "none";
+      container.style.display = "none";
+
+      try {
+        const resp = await fetch("/ops/pending");
+        if (!resp.ok) throw new Error("Server responded with HTTP " + resp.status);
+        queueItems = await resp.json();
+
+        loading.style.display = "none";
+        countBadge.innerText = queueItems.length;
+
+        if (queueItems.length === 0) {
+          empty.style.display = "block";
+          return;
+        }
+
+        const tbody = document.getElementById("queueTbody");
+        tbody.innerHTML = "";
+
+        queueItems.forEach(item => {
+          const tr = document.createElement("tr");
+          tr.className = "clickable" + (item.rider_id === activeRider ? " selected" : "");
+          tr.onclick = (e) => {
+            if (e.target.tagName.toLowerCase() === "button") return;
+            selectRider(item.rider_id);
+          };
+
+          const typeBadge = `<span class="badge ${item.type === 'approval' ? 'badge-approval' : 'badge-escalation'}">${item.type}</span>`;
+          const amtText = item.amount ? `<span class="amount-tag">₹${item.amount}</span>` : "-";
+          const dateStr = new Date(item.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', month: 'short', day: 'numeric' });
+
+          tr.innerHTML = `
+            <td><span class="rider-pill">${item.rider_id}</span></td>
+            <td>${typeBadge}</td>
+            <td>${amtText}</td>
+            <td class="reason-cell" title="${escapeHtml(item.reason)}">${escapeHtml(item.reason)}</td>
+            <td style="color: var(--text-muted); font-size: 11px;">${dateStr}</td>
+            <td>
+              <div style="display: flex; gap: 6px;">
+                <button class="btn btn-success" style="padding: 4px 8px; font-size: 11px;" onclick="resolveItem('${item.id}', 'approve')">Approve</button>
+                <button class="btn btn-danger" style="padding: 4px 8px; font-size: 11px;" onclick="resolveItem('${item.id}', 'reject')">Reject</button>
+              </div>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        container.style.display = "block";
+      } catch (e) {
+        loading.style.display = "none";
+        err.style.display = "block";
+        document.getElementById("queueErrorMsg").innerText = "Error: " + e.message;
+      }
+    }
+
+    async function resolveItem(itemId, action) {
+      if (!confirm(`Are you sure you want to ${action} this item?`)) return;
+      try {
+        const resp = await fetch(`/ops/${itemId}/${action}`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ notes: `Action taken via Operations Dashboard` })
+        });
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        const data = await resp.json();
+        showToast(data.message || `Item successfully ${action}d`);
+        loadPending();
+        if (activeRider) fetchConversation(activeRider);
+      } catch (err) {
+        showToast(`Failed to ${action} item: ` + err.message, true);
+      }
+    }
+
+    function selectRider(riderId) {
+      activeRider = riderId.trim().toUpperCase();
+      document.getElementById("traceRiderInput").value = activeRider;
+      document.getElementById("traceRiderBadge").innerText = activeRider;
+
+      document.querySelectorAll("#queueTbody tr").forEach(row => {
+        row.classList.remove("selected");
+        if (row.querySelector(".rider-pill")?.innerText === activeRider) {
+          row.classList.add("selected");
+        }
+      });
+
+      fetchConversation(activeRider);
+    }
+
+    function handleRiderChange() {
+      const val = document.getElementById("traceRiderInput").value.trim().toUpperCase();
+      if (val) selectRider(val);
+    }
+
+    function reloadActiveConversation() {
+      if (activeRider) fetchConversation(activeRider);
+    }
+
+    async function fetchConversation(riderId) {
+      const loading = document.getElementById("traceLoading");
+      const empty = document.getElementById("traceEmpty");
+      const err = document.getElementById("traceError");
+      const container = document.getElementById("traceContainer");
+      const badge = document.getElementById("traceRiderBadge");
+
+      loading.style.display = "block";
+      empty.style.display = "none";
+      err.style.display = "none";
+
+      badge.innerText = riderId;
+
+      try {
+        const resp = await fetch(`/trace/${encodeURIComponent(riderId)}/conversation`);
+        if (!resp.ok) throw new Error("HTTP " + resp.status);
+        const data = await resp.json();
+
+        loading.style.display = "none";
+
+        const conversations = data.conversations || [];
+        const traces = data.traces || [];
+
+        const chatFeed = document.getElementById("chatFeed");
+        chatFeed.innerHTML = "";
+
+        if (conversations.length === 0 && traces.length === 0) {
+          empty.style.display = "block";
+        } else {
+          // Render conversation turns
+          conversations.forEach(turn => {
+            appendMessagePair(turn.text, turn.reply, turn.received_at, turn.has_reply, turn.rider_id);
+          });
+        }
+
+        // Render technical details
+        renderTechnicalLogs(traces);
+
+        container.style.display = "flex";
+        scrollChatToBottom();
+      } catch (e) {
+        loading.style.display = "none";
+        err.style.display = "block";
+        document.getElementById("traceErrorMsg").innerText = "Error: " + e.message;
+      }
+    }
+
+    function appendMessagePair(riderText, agentReply, timestamp, hasReply, riderId) {
+      const chatFeed = document.getElementById("chatFeed");
+      const timeStr = timestamp ? new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // Rider Bubble (Left)
+      const riderWrapper = document.createElement("div");
+      riderWrapper.className = "chat-bubble-wrapper rider";
+      riderWrapper.innerHTML = `
+        <div class="chat-label-row">
+          <span class="chat-label-badge rider">Rider (${escapeHtml(riderId || activeRider)})</span>
+          <span>•</span>
+          <span>${timeStr}</span>
+        </div>
+        <div class="chat-bubble rider">${escapeHtml(riderText)}</div>
+      `;
+      chatFeed.appendChild(riderWrapper);
+
+      // Agent Bubble (Right)
+      const agentWrapper = document.createElement("div");
+      agentWrapper.className = "chat-bubble-wrapper agent";
+      const validReply = hasReply && agentReply && agentReply.trim().length > 0;
+      const replyContent = validReply ? escapeHtml(agentReply) : "Agent response unavailable for this historical message.";
+      const extraClass = validReply ? "" : " unavailable";
+
+      agentWrapper.innerHTML = `
+        <div class="chat-label-row">
+          <span>${timeStr}</span>
+          <span>•</span>
+          <span class="chat-label-badge agent">AI Agent</span>
+        </div>
+        <div class="chat-bubble agent${extraClass}">${replyContent}</div>
+      `;
+      chatFeed.appendChild(agentWrapper);
+    }
+
+    function renderTechnicalLogs(traces) {
+      const techSection = document.getElementById("techLogContent");
+      techSection.innerHTML = "";
+      document.getElementById("techEventCount").innerText = traces.length;
+
+      if (!traces || traces.length === 0) {
+        techSection.innerHTML = `<div style="color: var(--text-muted); padding: 4px;">No technical trace events logged.</div>`;
+        return;
+      }
+
+      traces.forEach(t => {
+        const timeStr = new Date(t.at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        const item = document.createElement("div");
+        item.className = "tech-item";
+        item.innerHTML = `
+          <div style="display: flex; justify-content: space-between; margin-bottom: 2px;">
+            <strong style="color: #cbd5e1;">[${escapeHtml(t.type)}] ${escapeHtml(t.name)}</strong>
+            <span>${timeStr}</span>
+          </div>
+          <div style="word-break: break-all; opacity: 0.85;">Input: ${escapeHtml(JSON.stringify(t.input))}</div>
+          <div style="word-break: break-all; opacity: 0.85;">Output: ${escapeHtml(JSON.stringify(t.output))}</div>
+        `;
+        techSection.appendChild(item);
+      });
+    }
+
+    function scrollChatToBottom() {
+      const chatFeed = document.getElementById("chatFeed");
+      chatFeed.scrollTop = chatFeed.scrollHeight;
+    }
+
+    async function sendMessage() {
+      if (isSending) return;
+      const input = document.getElementById("chatMessageInput");
+      const text = input.value.trim();
+      if (!text) return;
+
+      const sendBtn = document.getElementById("btnSendMessage");
+      const chatFeed = document.getElementById("chatFeed");
+      const emptyState = document.getElementById("traceEmpty");
+      emptyState.style.display = "none";
+
+      // Build payload with unique message_id
+      const nowIso = new Date().toISOString();
+      const messageId = "web-" + Date.now() + "-" + Math.random().toString(36).substring(2, 8);
+      const payload = {
+        message_id: messageId,
+        rider_id: activeRider,
+        text: text,
+        received_at: nowIso
+      };
+
+      // 1. Append rider bubble immediately
+      const riderWrapper = document.createElement("div");
+      riderWrapper.className = "chat-bubble-wrapper rider";
+      const timeStr = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      riderWrapper.innerHTML = `
+        <div class="chat-label-row">
+          <span class="chat-label-badge rider">Rider (${escapeHtml(activeRider)})</span>
+          <span>•</span>
+          <span>${timeStr}</span>
+        </div>
+        <div class="chat-bubble rider">${escapeHtml(text)}</div>
+      `;
+      chatFeed.appendChild(riderWrapper);
+
+      // 2. Append temporary loading bubble for agent
+      const agentWrapper = document.createElement("div");
+      agentWrapper.className = "chat-bubble-wrapper agent";
+      const tempAgentId = "temp-" + Date.now();
+      agentWrapper.id = tempAgentId;
+      agentWrapper.innerHTML = `
+        <div class="chat-label-row">
+          <span>${timeStr}</span>
+          <span>•</span>
+          <span class="chat-label-badge agent">AI Agent</span>
+        </div>
+        <div class="chat-bubble agent loading-bubble">
+          <div class="loading-spinner loading-spinner-sm"></div>
+          <span>Processing dispute with policy checks...</span>
+        </div>
+      `;
+      chatFeed.appendChild(agentWrapper);
+      scrollChatToBottom();
+
+      // Clear input and lock button
+      input.value = "";
+      isSending = true;
+      sendBtn.disabled = true;
+
+      try {
+        const resp = await fetch("/messages", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        if (!resp.ok) {
+          throw new Error("HTTP " + resp.status + ": " + (await resp.text()));
+        }
+
+        const data = await resp.json();
+        const reply = data.reply;
+
+        // Replace loading bubble with real reply
+        const bubble = agentWrapper.querySelector(".chat-bubble");
+        bubble.className = "chat-bubble agent";
+        bubble.innerHTML = escapeHtml(reply);
+
+        showToast("Message processed successfully");
+        loadPending(); // refresh queue in case an item was queued
+
+        // Refresh technical logs after processing
+        fetchTechnicalLogsOnly(activeRider);
+
+      } catch (err) {
+        const bubble = agentWrapper.querySelector(".chat-bubble");
+        bubble.className = "chat-bubble agent unavailable";
+        bubble.innerHTML = `Failed to receive agent reply: ${escapeHtml(err.message)}. Check network connection or retry.`;
+        showToast("Network or processing failure: " + err.message, true);
+      } finally {
+        isSending = false;
+        sendBtn.disabled = false;
+        scrollChatToBottom();
+      }
+    }
+
+    async function fetchTechnicalLogsOnly(riderId) {
+      try {
+        const resp = await fetch(`/trace/${encodeURIComponent(riderId)}`);
+        if (resp.ok) {
+          const traces = await resp.json();
+          renderTechnicalLogs(traces);
+        }
+      } catch (_) {}
+    }
+
+    // Keyboard support: Enter to send, Shift+Enter for newline
+    document.getElementById("chatMessageInput").addEventListener("keydown", function(e) {
+      if (e.key === "Enter" && !e.shiftKey) {
+        e.preventDefault();
+        sendMessage();
+      }
+    });
+
+    document.getElementById("traceRiderInput").addEventListener("keydown", function(e) {
+      if (e.key === "Enter") {
+        e.preventDefault();
+        handleRiderChange();
+      }
+    });
+
+    function escapeHtml(str) {
+      if (str === null || str === undefined) return "";
+      return String(str)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+    }
+
+    // Initial load: queue and default rider R003
+    loadPending();
+    selectRider("R003");
+  </script>
+</body>
+</html>

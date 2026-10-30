@@ -4,3 +4,53 @@ services:
     build: ./payswift
     ports:
       - "8081:8081"
+
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: qd
+      POSTGRES_PASSWORD: qd_secret
+      POSTGRES_DB: qddb
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qd -d qddb"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build:
+      context: .
+      dockerfile: app/Dockerfile
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      payswift:
+        condition: service_started
+    environment:
+      DATABASE_URL: postgresql+psycopg2://qd:qd_secret@db:5432/qddb
+      PAYSWIFT_BASE_URL: http://payswift:8081
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      GEMINI_MODEL: ${GEMINI_MODEL:-gemini-3.8-flash}
+      GEMINI_TIMEOUT: ${GEMINI_TIMEOUT:-45}
+      RIDERS_CSV: /data/riders.csv
+      TRIPS_CSV: /data/trips.csv
+      PAYOUT_LINES_CSV: /data/payout_lines.csv
+      CONVERSATIONS_JSON: /data/conversations.json
+      PAYSWIFT_MAX_RETRIES: "3"
+      PAYSWIFT_TIMEOUT: "10"
+      PYTHONPATH: /app
+    volumes:
+      - ./data:/data:ro
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8000/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pgdata:
